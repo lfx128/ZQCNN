@@ -824,34 +824,57 @@ namespace ZQ
 			person_names.clear();
 			filenames.clear();
 
-			if ((lfDir = _findfirst(dir.c_str(), &fileDir)) == -1l)
-			{
+			if ((lfDir = _findfirst(dir.c_str(), &fileDir)) == -1l){
 				//printf("No file is found\n");
-			}
-			else
-			{
+			}else {
 				do {
-
 					std::string str(fileDir.name);
 					if (fileDir.attrib & _A_SUBDIR && 0 != strcmp(str.c_str(), ".") && 0 != strcmp(str.c_str(), ".."))
 						person_names.push_back(str);
-
-
 				} while (_findnext(lfDir, &fileDir) == 0);
 			}
 			_findclose(lfDir);
 
+			std::vector<std::string> person_names_sub;
 			int person_num = person_names.size();
 			filenames.resize(person_num);
-			for (int i = 0; i < person_num; i++)
-			{
-				dir = root_path + "\\" + person_names[i] + "\\*.jpg";
-				if ((lfDir = _findfirst(dir.c_str(), &fileDir)) == -1l)
+
+			for (int i = 0; i < person_num; i++){
+				//找下一级目录下的图片
+				std::string dirSub(root_path + "\\" + person_names[i]);
+				dirSub.append("\\*.*");
+				if ((lfDir = _findfirst(dirSub.c_str(), &fileDir)) == -1l)
 				{
 					//printf("No file is found\n");
+				}else {
+					do {
+
+						std::string str(fileDir.name);
+						if (fileDir.attrib & _A_SUBDIR && 0 != strcmp(str.c_str(), ".") && 0 != strcmp(str.c_str(), ".."))
+							person_names_sub.push_back(str);
+					} while (_findnext(lfDir, &fileDir) == 0);
 				}
-				else
-				{
+				_findclose(lfDir);
+
+				//第二级目录图片加入 added by felix
+				for (int j = 0; j < person_names_sub.size(); j++) {
+					dir = root_path + "\\" + person_names[i] + "\\" + person_names_sub[j] + "\\*.jpg";
+					if ((lfDir = _findfirst(dir.c_str(), &fileDir)) == -1l)	{
+						//printf("No file is found\n");
+					}else{
+						do {
+							std::string str(fileDir.name);
+							filenames[i].push_back(root_path + "\\" + person_names[i] + "\\" + person_names_sub[j] + "\\" + str);
+						} while (_findnext(lfDir, &fileDir) == 0);
+					}
+					_findclose(lfDir);
+				}
+
+				//第一级目录下的图片加入
+				dir = root_path + "\\" + person_names[i] + "\\*.jpg";
+				if ((lfDir = _findfirst(dir.c_str(), &fileDir)) == -1l)	{
+					//printf("No file is found\n");
+				}else{
 					do {
 						std::string str(fileDir.name);
 						filenames[i].push_back(root_path + "\\" + person_names[i] + "\\" + str);
